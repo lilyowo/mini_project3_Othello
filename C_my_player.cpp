@@ -6,7 +6,8 @@
 #include <ctime>
 #include<stdio.h>
 #include <limits.h>
-//beat baseline 1 2 3
+//避免對手下一步搶角
+
 
 struct Point {
 	int x, y;
@@ -153,11 +154,17 @@ public:
 		else
 			ratio = (float)(this->disc_count[player]) / (float)(this->disc_count[3 - player]);
 
-        if((float)(this->disc_count[player]) + (float)(this->disc_count[3 - player]) < 35)
-            ans = 0*ratio + 5*next_step_num;
+        if((float)(this->disc_count[player]) + (float)(this->disc_count[3 - player]) < 21)
+            ans = (-1)*ratio + 10*next_step_num;
         else
-            ans = 5*ratio + 3*next_step_num;
+            ans = 5*ratio + 8*next_step_num;
 
+        this->cur_player = 3 - this->cur_player;
+        for(auto p:this->get_valid_spots()){
+            if((p.x==0 && p.y==0) || (p.x==0 && p.y==7) || (p.x==7 && p.y==0) || (p.x==7 && p.y==7))
+                ans -= 100;
+        }
+        this->cur_player = 3 - this->cur_player;
 		return ans;
 	}
 private:
@@ -228,14 +235,14 @@ std::vector<Point> next_valid_spots;
 int good_pos(int x, int y)
 {
 	int score[8][8] = {
-        { 25, -15,   8,   6,   6,   8, -15,  25},
-        {-15, -20,   3,   2,   2,   3, -20, -15},
-        {  8,   3,   5,   4,   4,   5,   3,   8},
-        {  6,   2,   4,   1,   1,   4,   2,   6},
-        {  6,   2,   4,   1,   1,   4,   2,   6},
-        {  8,   3,   5,   4,   4,   5,   3,   8},
-        {-15, -20,   3,   2,   2,   3, -20, -15},
-        { 25, -15,   8,   6,   6,   8, -15,  25}
+        {120, -30,  16,  12,  12,  16, -30, 120},
+        {-30, -40,   6,   4,   4,   6, -40, -30},
+        { 16,   6,  10,   8,   8,  10,   6,  16},
+        { 12,   4,   8,   0,   0,   8,   4,  12},
+        { 12,   4,   8,   0,   0,   8,   4,  12},
+        { 16,   6,  10,   8,   8,  10,   6,  16},
+        {-30, -40,   6,   4,   4,   6, -40, -30},
+        {120, -30,  16,  12,  12,  16, -30, 120}
     };
     if(board[0][0]==player) score[0][1] = score[1][0] = 9, score[1][1] = 2;
     if(board[0][7]==player) score[0][6] = score[1][7] = 9, score[1][6] = 2;
@@ -280,6 +287,25 @@ int minimax(int depth, OthelloBoard& board, int alpha, int beta)
 			OthelloBoard next_board = board;
 			next_board.put_disc(*it);
 			int m = minimax(depth + 1, next_board, alpha, beta) + good_pos((*it).x, (*it).y);//!!OWO
+			//散度理論 散度:周圍空格數量 優：吃對方散度為一的子 總吃敵方的散度要小
+             //01找到兩個板前後 翻轉的子(board中的對手 next_board中變成我方) 02計算每一顆的散度(空格用board的計) 03在比較處為高散度扣分
+             int sandu = 0;
+             for(int i=0;i<SIZE;i++){
+                for(int j=0;j<SIZE;j++){
+                    if(board.board[i][j]==(3 - board.cur_player)&&next_board.board[i][j]==(board.cur_player)){
+                        if(board.board[i-1][j-1]==0) sandu++;
+                        if(board.board[i-1][j]==0) sandu++;
+                        if(board.board[i-1][j+1]==0) sandu++;
+                        if(board.board[i][j-1]==0) sandu++;
+                        if(board.board[i][j+1]==0) sandu++;
+                        if(board.board[i+1][j-1]==0) sandu++;
+                        if(board.board[i+1][j]==0) sandu++;
+                        if(board.board[i+1][j+1]==0) sandu++;
+                    }
+
+                }
+             }
+             m -= sandu;
 
 			if (m > max) {
 				max = m;
@@ -326,7 +352,7 @@ void write_valid_spot(std::ofstream& fout) {
 		next_board.put_disc(*it);  //放disc
 		int m = 0;
 		if (next_board.done == 1)
-			m = next_board.count_value() + good_pos((*it).x, (*it).y);//!!OWO
+            m = next_board.count_value() + good_pos((*it).x, (*it).y) ;//!!OWO
 		else m = minimax(2, next_board, alpha, beta) + good_pos((*it).x, (*it).y);//!!OWO
 		if (m > bp) {
 			bp = m;
