@@ -18,6 +18,7 @@ std::array<std::array<int, SIZE>, SIZE> board;
 std::vector<Point> next_valid_spots;
 int get_score(Point p);
 
+
 void read_board(std::ifstream& fin) {
     fin >> player;
     for (int i = 0; i < SIZE; i++) {
@@ -71,8 +72,10 @@ int get_score(Point p){
     if(board[0][7]==player) score[0][6] = score[1][7] = 10, score[1][6] = 5;
     if(board[7][0]==player) score[6][0] = score[7][1] = 10, score[6][1] = 5;
     if(board[7][7]==player) score[7][6] = score[6][7] = 10, score[6][6] = 5;
+    array<array<int, SIZE>, SIZE> new_board;
     return score[p.x][p.y];
 }
+
 
 int main(int, char** argv) {
     std::ifstream fin(argv[1]);
