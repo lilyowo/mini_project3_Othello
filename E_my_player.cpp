@@ -289,21 +289,21 @@ int minimax(int depth, OthelloBoard& board, int alpha, int beta)
 		for (it = child.begin(); it != child.end(); it++) {
 			OthelloBoard next_board = board;
 			next_board.put_disc(*it);
-			int m = minimax(depth + 1, next_board, alpha, beta) + good_pos((*it).x, (*it).y);//!!OWO
+			int m = minimax(depth + 1, next_board, alpha, beta) + good_pos((*it).x, (*it).y)*5;//!!OWO
 			//散度理論 散度:周圍空格數量 優：吃對方散度為一的子 總吃敵方的散度要小
              //01找到兩個板前後 翻轉的子(board中的對手 next_board中變成我方) 02計算每一顆的散度(空格用board的計) 03在比較處為高散度扣分
              int sandu = 0;
              for(int i=0;i<SIZE;i++){
                 for(int j=0;j<SIZE;j++){
                     if(board.board[i][j]==(3 - board.cur_player)&&next_board.board[i][j]==(board.cur_player)){
-                        if(board.board[i-1][j-1]==0) sandu++;
-                        if(board.board[i-1][j]==0) sandu++;
-                        if(board.board[i-1][j+1]==0) sandu++;
-                        if(board.board[i][j-1]==0) sandu++;
-                        if(board.board[i][j+1]==0) sandu++;
-                        if(board.board[i+1][j-1]==0) sandu++;
-                        if(board.board[i+1][j]==0) sandu++;
-                        if(board.board[i+1][j+1]==0) sandu++;
+                        if((i>0&&j>0)&&board.board[i-1][j-1]==0) sandu++;
+                        if((i>0)&&board.board[i-1][j]==0) sandu++;
+                        if((i>0&&j<7)&&board.board[i-1][j+1]==0) sandu++;
+                        if((j>0)&&board.board[i][j-1]==0) sandu++;
+                        if((j<7)&&board.board[i][j+1]==0) sandu++;
+                        if((i<7&&j>0)&&board.board[i+1][j-1]==0) sandu++;
+                        if((i<7)&&board.board[i+1][j]==0) sandu++;
+                        if((i<7&&j<7)&&board.board[i+1][j+1]==0) sandu++;
                     }
 
                 }
@@ -325,7 +325,7 @@ int minimax(int depth, OthelloBoard& board, int alpha, int beta)
 		for (it = child.begin(); it != child.end(); it++) {
 			OthelloBoard next_board = board;
 			next_board.put_disc(*it);
-			int m = minimax(depth + 1, next_board, alpha, beta) + good_pos((*it).x, (*it).y);//!!OWO
+			int m = minimax(depth + 1, next_board, alpha, beta) + good_pos((*it).x, (*it).y)*5;//!!OWO
 			if (m < min) {
 				min = m;
 				beta = m;
@@ -355,7 +355,7 @@ void write_valid_spot(std::ofstream& fout) {
 		next_board.put_disc(*it);  //放disc
 		int m = 0;
 		if (next_board.done == 1)
-            m = next_board.count_value() + good_pos((*it).x, (*it).y) ;//!!OWO
+            m = next_board.count_value() + good_pos((*it).x, (*it).y)*5 ;//!!OWO
 		else m = minimax(2, next_board, alpha, beta) + good_pos((*it).x, (*it).y);//!!OWO
 		if (m > bp) {
 			bp = m;
@@ -364,7 +364,19 @@ void write_valid_spot(std::ofstream& fout) {
 		}
 	}
 	//printf("bp %d (%d, %d)\n", bp, best_point.x, best_point.y);
-	fout << best_point.x << " " << best_point.y << std::endl;
+	int my_flag = 1;
+for(auto qoq:next_valid_spots){
+  if(qoq == best_point) my_flag = 0;
+  if(my_flag==0) break;
+}
+if(my_flag){
+  int n_valid_spots = next_valid_spots.size();
+  int index = (rand() % n_valid_spots);
+  Point p = next_valid_spots[index];
+  fout << p.x << " " << p.y << std::endl;
+}
+else
+  fout<<best_point.x<<" "<<best_point.y<<std::endl;
 	fout.flush();
 }
 

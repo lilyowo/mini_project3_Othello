@@ -6,11 +6,8 @@
 #include <ctime>
 #include<stdio.h>
 #include <limits.h>
-//在棋局進行到1/3前盡量別吃太多子
-//避免對手下一步搶角
-//搶下角則C位X位安全 延伸出的邊為穩定子
-//散度理論 散度:周圍空格數量 優：吃對方散度為一的子 總吃敵方的散度要小
-//01找到兩個板前後 翻轉的子(board中的對手 next_board中變成我方) 02計算每一顆的散度(空格用board的計) 03在比較處為高散度扣分
+
+
 
 struct Point {
 	int x, y;
@@ -103,7 +100,7 @@ public:
 		done = false;
 		winner = -1;
 	}
-	std::vector<Point> get_valid_spots() {
+	std::vector<Point> get_valid_spots() {//得到可放子的地方們
 		std::vector<Point> valid_spots;
 		for (int i = 0; i < SIZE; i++) {
 			for (int j = 0; j < SIZE; j++) {
@@ -157,13 +154,13 @@ public:
 		else
 			ratio = (float)(this->disc_count[player]) / (float)(this->disc_count[3 - player]);
 
-        if((float)(this->disc_count[player]) + (float)(this->disc_count[3 - player]) < 21)//在棋局進行到1/3前盡量別吃太多子
+        if((float)(this->disc_count[player]) + (float)(this->disc_count[3 - player]) < 21)
             ans = (-1)*ratio + 10*next_step_num;
         else
             ans = 5*ratio + 8*next_step_num;
 
         this->cur_player = 3 - this->cur_player;
-        for(auto p:this->get_valid_spots()){//避免對手下一步搶角
+        for(auto p:this->get_valid_spots()){
             if((p.x==0 && p.y==0) || (p.x==0 && p.y==7) || (p.x==7 && p.y==0) || (p.x==7 && p.y==7))
                 ans -= 100;
         }
@@ -174,13 +171,13 @@ private:
 	int get_next_player(int player) {
 		return 3 - player;
 	}
-	bool is_spot_on_board(Point p) {
+	bool is_spot_on_board(Point p) {//是否在棋盤範圍
 		return 0 <= p.x && p.x < SIZE && 0 <= p.y && p.y < SIZE;
 	}
 	int get_disc(Point p) {
 		return board[p.x][p.y];
 	}
-	void set_disc(Point p, int disc) {
+	void set_disc(Point p, int disc) {//再point放上disk
 		board[p.x][p.y] = disc;
 	}
 	bool is_disc_at(Point p, int disc) {
@@ -247,7 +244,7 @@ int good_pos(int x, int y)
         {-30, -40,   6,   4,   4,   6, -40, -30},
         {120, -30,  16,  12,  12,  16, -30, 120}
     };
-    if(board[0][0]==player) score[0][1] = score[1][0] = 9, score[1][1] = 2;//搶下角則C位X位安全 延伸出的邊為穩定子
+    if(board[0][0]==player) score[0][1] = score[1][0] = 9, score[1][1] = 2;
     if(board[0][7]==player) score[0][6] = score[1][7] = 9, score[1][6] = 2;
     if(board[7][0]==player) score[6][0] = score[7][1] = 9, score[6][1] = 2;
     if(board[7][7]==player) score[7][6] = score[6][7] = 9, score[6][6] = 2;
@@ -292,23 +289,25 @@ int minimax(int depth, OthelloBoard& board, int alpha, int beta)
 			int m = minimax(depth + 1, next_board, alpha, beta) + good_pos((*it).x, (*it).y);//!!OWO
 			//散度理論 散度:周圍空格數量 優：吃對方散度為一的子 總吃敵方的散度要小
              //01找到兩個板前後 翻轉的子(board中的對手 next_board中變成我方) 02計算每一顆的散度(空格用board的計) 03在比較處為高散度扣分
-             int sandu = 0;
-             for(int i=0;i<SIZE;i++){
-                for(int j=0;j<SIZE;j++){
-                    if(board.board[i][j]==(3 - board.cur_player)&&next_board.board[i][j]==(board.cur_player)){
-                        if(board.board[i-1][j-1]==0) sandu++;
-                        if(board.board[i-1][j]==0) sandu++;
-                        if(board.board[i-1][j+1]==0) sandu++;
-                        if(board.board[i][j-1]==0) sandu++;
-                        if(board.board[i][j+1]==0) sandu++;
-                        if(board.board[i+1][j-1]==0) sandu++;
-                        if(board.board[i+1][j]==0) sandu++;
-                        if(board.board[i+1][j+1]==0) sandu++;
+             if((float)(board.disc_count[board.cur_player]) + (float)(board.disc_count[3 - board.cur_player]) < 21){
+                int sandu = 0;
+                for(int i=0;i<SIZE;i++){
+                    for(int j=0;j<SIZE;j++){
+                        if(board.board[i][j]==(3 - board.cur_player)&&next_board.board[i][j]==(board.cur_player)){
+                            if(board.board[i-1][j-1]==0) sandu++;
+                            if(board.board[i-1][j]==0) sandu++;
+                            if(board.board[i-1][j+1]==0) sandu++;
+                            if(board.board[i][j-1]==0) sandu++;
+                            if(board.board[i][j+1]==0) sandu++;
+                            if(board.board[i+1][j-1]==0) sandu++;
+                            if(board.board[i+1][j]==0) sandu++;
+                            if(board.board[i+1][j+1]==0) sandu++;
+                        }
                     }
-
                 }
+                m -= sandu;
              }
-             m -= sandu;
+
 
 			if (m > max) {
 				max = m;
@@ -326,6 +325,24 @@ int minimax(int depth, OthelloBoard& board, int alpha, int beta)
 			OthelloBoard next_board = board;
 			next_board.put_disc(*it);
 			int m = minimax(depth + 1, next_board, alpha, beta) + good_pos((*it).x, (*it).y);//!!OWO
+			if((float)(board.disc_count[board.cur_player]) + (float)(board.disc_count[3 - board.cur_player]) < 21){
+                int sandu = 0;
+                for(int i=0;i<SIZE;i++){
+                    for(int j=0;j<SIZE;j++){
+                        if(board.board[i][j]==(3 - board.cur_player)&&next_board.board[i][j]==(board.cur_player)){
+                            if(board.board[i-1][j-1]==0) sandu++;
+                            if(board.board[i-1][j]==0) sandu++;
+                            if(board.board[i-1][j+1]==0) sandu++;
+                            if(board.board[i][j-1]==0) sandu++;
+                            if(board.board[i][j+1]==0) sandu++;
+                            if(board.board[i+1][j-1]==0) sandu++;
+                            if(board.board[i+1][j]==0) sandu++;
+                            if(board.board[i+1][j+1]==0) sandu++;
+                        }
+                    }
+                }
+                m -= sandu;
+             }
 			if (m < min) {
 				min = m;
 				beta = m;
@@ -357,6 +374,24 @@ void write_valid_spot(std::ofstream& fout) {
 		if (next_board.done == 1)
             m = next_board.count_value() + good_pos((*it).x, (*it).y) ;//!!OWO
 		else m = minimax(2, next_board, alpha, beta) + good_pos((*it).x, (*it).y);//!!OWO
+		if((float)(Board.disc_count[Board.cur_player]) + (float)(Board.disc_count[3 - Board.cur_player]) < 21){
+            int sandu = 0;
+            for(int i=0;i<SIZE;i++){
+                for(int j=0;j<SIZE;j++){
+                    if(Board.board[i][j]==(3 - Board.cur_player)&&next_board.board[i][j]==(Board.cur_player)){
+                        if(Board.board[i-1][j-1]==0) sandu++;
+                        if(Board.board[i-1][j]==0) sandu++;
+                        if(Board.board[i-1][j+1]==0) sandu++;
+                        if(Board.board[i][j-1]==0) sandu++;
+                        if(Board.board[i][j+1]==0) sandu++;
+                        if(Board.board[i+1][j-1]==0) sandu++;
+                        if(Board.board[i+1][j]==0) sandu++;
+                        if(Board.board[i+1][j+1]==0) sandu++;
+                    }
+                }
+            }
+            m -= sandu;
+        }
 		if (m > bp) {
 			bp = m;
 			best_point = *it;
